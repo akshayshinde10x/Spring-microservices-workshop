@@ -1,0 +1,42 @@
+#server.port=8085
+server:
+  port: 8085
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ 
+#eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: microservice1
+              uri: lb://microservice1
+              predicates:
+                - Path=/products/**
+            - id: microservice-2
+              uri: lb://microservice-2
+              predicates:
+                - Path=/orders/**
+
+
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                 - Path=/api/orders/**
+            - id: inventory-service
+              uri: lb://inventory-service
+              predicates:
+                 - Path=/api/inventory/**
+        
+
+# spring.cloud.gateway.server.webflux.routes[0].id=order-service
+# spring.cloud.gateway.server.webflux.routes[0].uri=lb://order-service
+# spring.cloud.gateway.server.webflux.routes[0].predicates[0]=Path=/api/orders/**
