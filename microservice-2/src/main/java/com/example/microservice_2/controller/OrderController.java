@@ -9,33 +9,47 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.example.microservice_2.dto.Product;
 import com.example.microservice_2.feign.OrderFeignClient;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @RestController
 public class OrderController {
 
 	private RestTemplate restTemplate;
 	private WebClient webClient;
 	private OrderFeignClient feignClient;
-	public OrderController(RestTemplate restTemplate, 
-			WebClient.Builder webClientBuilder, OrderFeignClient feignClient) {
+
+	public OrderController(RestTemplate restTemplate, WebClient.Builder webClientBuilder,
+			OrderFeignClient feignClient) {
 		this.webClient = webClientBuilder.build();
 		this.restTemplate = restTemplate;
 		this.feignClient = feignClient;
-	}	
-	
+	}
+
 	@GetMapping("/orders/product/{id}")
 	public Product getOrderById(@PathVariable Long id) {
 //	    return restTemplate.getForObject(
 //	            "http://microservice1/api/products/" + id,
 //	            Product.class
 //	        );
-		
+
 //		return webClient.get()
 //		        .uri("http://microservice1/api/products/" + id)
 //		        .retrieve()
 //		        .bodyToMono(Product.class)
 //		        .block();
-		
+
 		return feignClient.getProductById(id);
-		
 	}
+
+	@GetMapping("/orders/circuit/{id}")
+	@CircuitBreaker(name = "microservice1", fallbackMethod = "fallbackGetOrderById")
+	public Product getOrderByCircuit(@PathVariable Long id) {
+		return feignClient.getProductById(id);
+	}
+
+	public Product fallbackGetOrderById(Long id, Exception t) {
+		System.out.println("Fallback executed: " + t.getMessage());
+		return new Product();
+	}
+
 }
